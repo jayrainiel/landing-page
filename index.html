@@ -50,7 +50,11 @@
     cursor:grab;
   }
   .globe-wrap.is-dragging{cursor:grabbing;}
-  .globe-wrap canvas{display:block;width:100%;height:100%;}
+  /* Hidden until the real Earth texture is actually applied — without this,
+     every load/refresh briefly shows an untextured (flat grey-white) sphere
+     while the day-map JPEG is still fetching/decoding over the network. */
+  .globe-wrap canvas{display:block;width:100%;height:100%;opacity:0;transition:opacity .35s ease;}
+  .globe-wrap canvas.ready{opacity:1;}
   .globe-glow{
     position:absolute;z-index:1;
     left:81%;top:48%;
@@ -641,11 +645,13 @@ function loadTextures(){
       const pot = toPowerOfTwoTexture(tex.image, w, h);
       globe.material.map = applyTextureQuality(pot);
       globe.material.needsUpdate = true;
+      canvas.classList.add('ready');
     },
     undefined,
     ()=>{
       console.warn('Real Earth texture not found at', CONFIG.TEXTURES.day, '— using placeholder.');
       globe.material.map = applyTextureQuality(fallback().dayTexture); globe.material.needsUpdate = true;
+      canvas.classList.add('ready');
     }
   );
   loader.load(CONFIG.TEXTURES.clouds,
