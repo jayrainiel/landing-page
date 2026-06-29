@@ -27,15 +27,15 @@
   .scene{
     position:relative;width:100vw;height:100vh;overflow:hidden;
     background:
-      radial-gradient(ellipse 70% 60% at 82% 25%, rgba(255,255,255,.9) 0%, rgba(214,233,255,0) 55%),
-      radial-gradient(ellipse 80% 70% at 70% 50%, #eaf3ff 0%, #dbe9fb 55%, #cfe1f7 100%);
+      radial-gradient(ellipse 70% 60% at 82% 25%, rgba(255,255,255,.95) 0%, rgba(225,240,255,0) 55%),
+      radial-gradient(ellipse 80% 70% at 70% 50%, #f5faff 0%, #e9f2fc 55%, #dcebf9 100%);
   }
 
   .nebula, .stars{display:none;}
 
   .vignette{
     position:absolute;inset:0;z-index:6;pointer-events:none;
-    box-shadow:inset 0 0 120px 30px rgba(180,205,235,.25);
+    box-shadow:inset 0 0 110px 20px rgba(190,212,238,.14);
   }
 
   /* ===== Three.js globe stage =====
@@ -44,8 +44,8 @@
      a bright "product shot" composition rather than a bleeding cinematic one. */
   .globe-wrap{
     position:absolute;z-index:2;
-    left:76%;top:46%;
-    width:90vw;height:90vw;
+    left:76%;top:50%;
+    width:66vw;height:66vw;
     transform:translate(-50%,-50%);
     cursor:grab;
   }
@@ -57,8 +57,8 @@
   .globe-wrap canvas.ready{opacity:1;}
   .globe-glow{
     position:absolute;z-index:1;
-    left:76%;top:46%;
-    width:90vw;height:90vw;
+    left:76%;top:50%;
+    width:66vw;height:66vw;
     transform:translate(-50%,-50%) scale(1.05);
     border-radius:50%;
     pointer-events:none;
@@ -250,7 +250,7 @@
 
   @media (max-width:1080px){
     .panel{width:44vw;}
-    .globe-wrap, .globe-glow{width:105vw;height:105vw;left:78%;}
+    .globe-wrap, .globe-glow{width:78vw;height:78vw;left:78%;top:50%;}
     .nav-right .pill-btn span{display:none;}
   }
 
