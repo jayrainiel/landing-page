@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capital Ambulance — Global Operations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#030712;
+    --navy-deep:#020308;
+    --gold:#f3c63d;
+    --gold2:#d9a91c;
+    --text-muted:#aab2c5;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;background:var(--navy);overflow:hidden;}
+  body{font-family:'Inter',sans-serif;color:#fff;}
+
+  .scene{
+    position:relative;width:100vw;height:100vh;overflow:hidden;
+    background:
+      radial-gradient(ellipse 60% 50% at 78% 38%, rgba(40,90,170,.22) 0%, rgba(40,90,170,0) 60%),
+      radial-gradient(ellipse 50% 60% at 85% 70%, rgba(80,60,160,.14) 0%, rgba(80,60,160,0) 60%),
+      radial-gradient(ellipse 90% 90% at 50% 50%, #08152d 0%, var(--navy) 55%, var(--navy-deep) 100%);
+  }
+
+  .vignette{
+    position:absolute;inset:0;z-index:6;pointer-events:none;
+    box-shadow:inset 0 0 160px 40px rgba(0,0,0,.5);
+  }
+
+  .stars{position:absolute;inset:0;z-index:0;}
+  .stars span{
+    position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;
+    opacity:.6;animation:twinkle 4s ease-in-out infinite;
+  }
+  @keyframes twinkle{0%,100%{opacity:.08;}50%{opacity:.55;}}
+
+  /* ===== Three.js globe stage =====
+     .globe-wrap is an oversized square positioned so the sphere bleeds
+     past the top/right/bottom edges of the viewport, like the reference. */
+  .globe-wrap{
+    position:absolute;z-index:2;
+    left:81%;top:48%;
+    width:98vw;height:98vw;
+    transform:translate(-50%,-50%);
+    cursor:grab;
+  }
+  .globe-wrap.is-dragging{cursor:grabbing;}
+  .globe-wrap canvas{display:block;width:100%;height:100%;}
+  .globe-glow{
+    position:absolute;z-index:1;
+    left:81%;top:48%;
+    width:98vw;height:98vw;
+    transform:translate(-50%,-50%) scale(1.015);
+    border-radius:50%;
+    pointer-events:none;
+    background:radial-gradient(circle, rgba(120,175,255,0) 72%, rgba(110,170,255,.27) 80%, rgba(110,170,255,0) 90%);
+    filter:blur(3px);
+  }
+
+  svg#arcs{position:absolute;z-index:3;pointer-events:none;overflow:visible;width:100%;height:100%;top:0;left:0;}
+
+  .scrim{
+    position:absolute;inset:0;z-index:4;pointer-events:none;
+    background:linear-gradient(90deg,
+      rgba(2,4,10,1) 0%, rgba(2,4,10,.98) 22%, rgba(2,4,10,.92) 32%,
+      rgba(2,4,10,.74) 40%, rgba(2,4,10,.46) 48%, rgba(2,4,10,.22) 56%,
+      rgba(2,4,10,.08) 64%, rgba(2,4,10,0) 72%);
+  }
+
+  .nav{position:absolute;top:28px;left:36px;z-index:7;display:flex;align-items:center;gap:10px;}
+  .nav .logo-mark{width:28px;height:28px;background:conic-gradient(from 90deg,var(--gold),#5dd3ff,var(--gold));border-radius:6px;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);}
+  .nav .logo-text{font-family:'Sora',sans-serif;font-weight:700;font-size:14px;letter-spacing:.5px;line-height:1.2;}
+  .nav .variant-badge{
+    font-family:'Sora',sans-serif;font-weight:700;font-size:12px;color:#1a1303;
+    background:var(--gold);width:20px;height:20px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;margin-left:4px;
+  }
+
+  .panel{
+    position:absolute;left:34px;top:29%;z-index:7;
+    display:flex;flex-direction:column;
+    width:34vw;max-width:560px;padding:0 24px 0 4px;
+  }
+  .eyebrow{
+    color:var(--gold);font-size:12px;letter-spacing:3px;font-weight:600;
+    text-transform:uppercase;margin-bottom:18px;font-family:'Inter',sans-serif;
+    white-space:nowrap;
+  }
+  h1{
+    font-family:'Sora',sans-serif;font-weight:800;font-size:clamp(28px,3.6vw,48px);
+    line-height:1.14;margin:0 0 20px 0;letter-spacing:-.5px;
+  }
+  .desc{font-size:16px;line-height:1.6;color:var(--text-muted);max-width:480px;margin:0 0 32px 0;}
+
+  .cta{
+    display:inline-flex;align-items:center;gap:10px;background:linear-gradient(180deg,#ffd966,var(--gold));
+    color:#1a1303;font-weight:700;font-size:14px;padding:14px 26px;border-radius:999px;
+    border:none;cursor:pointer;width:fit-content;margin-bottom:56px;
+    transition:transform .25s ease, box-shadow .25s ease;
+    box-shadow:0 8px 24px rgba(243,198,61,.2);
+  }
+  .cta:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(243,198,61,.35);}
+  .cta svg{width:16px;height:16px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:16px;row-gap:14px;}
+  .stat{display:flex;flex-direction:column;gap:6px;padding:0 16px;position:relative;min-width:0;}
+  .stat:first-child{padding-left:0;}
+  .stat:nth-child(n+2)::before{
+    content:"";position:absolute;left:0;top:4px;bottom:4px;width:1px;
+    background:rgba(255,255,255,.15);
+  }
+  .stat .icon{color:var(--gold);width:18px;height:18px;margin-bottom:4px;flex:none;}
+  .stat .num{font-family:'Sora',sans-serif;font-weight:700;font-size:21px;white-space:nowrap;}
+  .stat .label{font-size:9px;letter-spacing:1px;color:var(--text-muted);text-transform:uppercase;white-space:nowrap;}
+
+  /* Anchor owns screen positioning + the one-time entrance transition;
+     the pill inside owns its own perpetual idle "breathing" transform.
+     Splitting these in two avoids the entrance and idle animations from
+     fighting over the same CSS transform property. */
+  .marker-anchor{
+    position:absolute;z-index:5;
+    opacity:0;transform:translate(-50%,-100%) translateY(6px) scale(.96);
+    transition:opacity .4s cubic-bezier(.16,1,.3,1), transform .4s cubic-bezier(.16,1,.3,1);
+  }
+  .marker-anchor.revealed{opacity:1;transform:translate(-50%,-100%) translateY(0) scale(1);}
+
+  .marker-pill{
+    display:flex;align-items:center;gap:10px;
+    background:rgba(12,16,28,.62);backdrop-filter:blur(16px) saturate(160%);
+    -webkit-backdrop-filter:blur(16px) saturate(160%);
+    border:1px solid rgba(255,255,255,.18);border-radius:999px;
+    padding:9px 17px 9px 8px;font-size:14px;font-weight:600;color:#eef1f8;
+    white-space:nowrap;
+    box-shadow:0 16px 38px rgba(0,0,0,.5), 0 4px 10px rgba(0,0,0,.3), 0 0 0 1px rgba(255,255,255,.04) inset;
+    pointer-events:auto;cursor:default;
+    transition:transform .25s ease, filter .25s ease, box-shadow .25s ease;
+  }
+  .marker-pill.is-hub{
+    background:rgba(42,32,6,.6);border-color:rgba(243,198,61,.5);
+    padding:11px 22px 11px 10px;font-size:16px;font-weight:700;
+    box-shadow:0 18px 44px rgba(0,0,0,.55), 0 0 30px rgba(243,198,61,.3);
+  }
+  .marker-pill .flag{width:18px;height:13px;border-radius:3px;overflow:hidden;flex:none;box-shadow:0 0 0 1px rgba(255,255,255,.3);}
+  .marker-pill.is-hub .flag{width:24px;height:17px;border-radius:4px;}
+
+  /* Apple-style hover: pause the idle breathe, lift slightly, brighten —
+     never a tooltip snap, never a bounce. */
+  .marker-pill:hover{
+    animation-play-state:paused !important;
+    transform:translateY(-2px);
+    filter:brightness(1.12);
+    box-shadow:0 20px 44px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.08) inset;
+  }
+
+  .intro-pending .marker-pill{animation-play-state:paused;}
+
+  /* thin leader line from the ground dot up to the floating badge */
+  .marker-connector{
+    position:absolute;z-index:5;width:2px;
+    background:linear-gradient(to top, rgba(243,198,61,.85), rgba(243,198,61,.05));
+    pointer-events:none;transform:translateX(-50%);
+    transition:opacity .4s ease;
+  }
+
+  @keyframes labelBreathe{
+    0%,100%{transform:scale(0.995) translateY(1px);}
+    50%{transform:scale(1) translateY(-1px);}
+  }
+
+  .marker-dot{
+    position:absolute;z-index:5;width:7px;height:7px;border-radius:50%;
+    background:var(--gold);transform:translate(-50%,-50%);
+    pointer-events:none;box-shadow:0 0 4px 1px rgba(243,198,61,.45);
+    transition:opacity .4s ease;
+  }
+  .marker-dot.hub{width:17px;height:17px;background:radial-gradient(circle at 35% 30%, #fff6d8, var(--gold) 60%, var(--gold2) 100%);box-shadow:0 0 14px 3px rgba(243,198,61,.7);}
+  /* Only the HQ marker pulses in idle — a single soft "mission control"
+     ping every 5–6s, not a constant radar sweep on every pin. */
+  .marker-dot.hub::after{
+    content:"";position:absolute;inset:-13px;border-radius:50%;
+    background:rgba(243,198,61,.32);animation:pulse 5.6s ease-out infinite;
+  }
+  .marker-dot.hub::before{
+    content:"";position:absolute;inset:-24px;border-radius:50%;
+    border:1px solid rgba(243,198,61,.3);animation:pulse 5.6s ease-out infinite;
+    animation-delay:.6s;
+  }
+  .intro-pending .marker-dot.hub::after,
+  .intro-pending .marker-dot.hub::before{animation-play-state:paused;}
+  @keyframes pulse{0%{transform:scale(.5);opacity:.8;}100%{transform:scale(2.4);opacity:0;}}
+
+  /* UAE gets a third, larger, slower pulse layer on top of the dot's own
+     two rings — reads as the regional headquarters, not just another pin. */
+  .hub-glow{
+    position:absolute;z-index:4;width:150px;height:150px;border-radius:50%;
+    background:radial-gradient(circle, rgba(243,198,61,.5) 0%, rgba(243,198,61,.12) 45%, rgba(243,198,61,0) 75%);
+    transform:translate(-50%,-50%);pointer-events:none;filter:blur(2px);
+    animation:hubGlowPulse 5.6s ease-in-out infinite;
+    opacity:0;transition:opacity .4s ease;
+  }
+  .intro-pending .hub-glow{animation-play-state:paused;}
+  @keyframes hubGlowPulse{
+    0%,100%{transform:translate(-50%,-50%) scale(.94);}
+    50%{transform:translate(-50%,-50%) scale(1.06);}
+  }
+
+  .hint{
+    position:absolute;bottom:26px;left:0;right:0;z-index:7;text-align:center;
+    color:var(--text-muted);font-size:12px;display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+
+  @media (max-width:1080px){
+    .panel{width:44vw;}
+    .globe-wrap, .globe-glow{width:118vw;height:118vw;left:80%;}
+  }
+
+  @media (max-width:880px){
+    .scene{display:flex;flex-direction:column;justify-content:flex-end;}
+    .panel{
+      position:relative;left:0;top:0;width:100%;max-width:100%;height:auto;
+      padding:0 22px 36px;justify-content:flex-start;z-index:7;
+    }
+    h1{font-size:28px;}
+    .desc{font-size:14px;}
+    .stats{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:18px;}
+    .scrim{background:linear-gradient(180deg, rgba(2,4,10,.25) 0%, rgba(2,4,10,.85) 45%, rgba(2,4,10,.98) 70%);}
+    .marker-pill, .marker-dot, .marker-connector, .hub-glow, #arcs{display:none;}
+    .globe-glow{display:none;}
+    .globe-wrap{
+      position:absolute;right:50%;top:6%;
+      width:130vw;height:130vw;
+      left:50%;transform:translateX(-50%);
+      opacity:.55;cursor:default;
+    }
+    .nav{top:18px;left:18px;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .stars span{animation:none;opacity:.5;}
+    .marker-dot::after, .marker-dot.hub::before{animation:none;display:none;}
+    .marker-pill{animation:none;}
+    .hub-glow{animation:none;}
+    .cta{transition:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="scene" id="scene">
+  <div class="stars" id="stars" aria-hidden="true"></div>
+
+  <div class="globe-glow" aria-hidden="true"></div>
+  <div class="globe-wrap" id="globeWrap">
+    <canvas id="globeCanvas"></canvas>
+  </div>
+
+  <svg id="arcs"></svg>
+
+  <div class="scrim"></div>
+  <div class="vignette" aria-hidden="true"></div>
+
+  <div class="nav">
+    <div class="logo-mark"></div>
+    <div class="logo-text">CAPITAL AMBULANCE</div>
+    <div class="variant-badge">3</div>
+  </div>
+
+  <main class="panel">
+    <p class="eyebrow">Capital Ambulance · Global Operations</p>
+    <h1>Connecting Critical Medical Response Across the Region</h1>
+    <p class="desc">Explore our healthcare and ambulance operations across the Middle East through an immersive global experience.</p>
+    <button class="cta" type="button">
+      Explore Operations
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </button>
+
+    <div class="stats">
+      <div class="stat">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 4 5.5 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.5-4-9s1.5-6.5 4-9z"/></svg>
+        <div class="num">4</div>
+        <div class="label">Countries</div>
+      </div>
+      <div class="stat">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 16V8a1 1 0 0 1 1-1h9l4 4h2a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><circle cx="7.5" cy="18.5" r="1.6"/><circle cx="17.5" cy="18.5" r="1.6"/></svg>
+        <div class="num">280+</div>
+        <div class="label">Fleet Units</div>
+      </div>
+      <div class="stat">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        <div class="num">24/7</div>
+        <div class="label">Operations</div>
+      </div>
+      <div class="stat">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 20c.1-2.6 1.7-4.6 4.3-4.9"/></svg>
+        <div class="num">15+</div>
+        <div class="label">Years of Care</div>
+      </div>
+    </div>
+  </main>
+
+  <div id="markers"></div>
+
+  <p class="hint">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="8" y="2" width="8" height="14" rx="4"/><line x1="12" y1="6" x2="12" y2="9"/></svg>
+    Click a country to explore
+  </p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ============================ CONFIG ============================ */
+const CONFIG = {
+  // Real lat/long. Swap TEXTURES paths below for production assets;
+  // everything else (markers, arcs, lighting) is unaffected by that swap.
+  countries: [
+    // labelDx/labelDy nudge only the badge (not the dot, which stays at the
+    // true projected lat/lon) so close-together Gulf countries don't overlap.
+    { id:'uae',   name:'UAE',   lat:23.4241, lon:53.8478, hub:true,  labelDx:22,  labelDy:2   },
+    { id:'qatar', name:'Qatar', lat:25.2854, lon:51.5310, hub:false, labelDx:16,  labelDy:-26 },
+    { id:'ksa',   name:'KSA',   lat:24.7136, lon:46.6753, hub:false, labelDx:-58, labelDy:6   },
+    { id:'syria', name:'Syria', lat:33.5138, lon:36.2765, hub:false, labelDx:0,   labelDy:0   }
+  ],
+  hubId: 'uae',
+  // Centered on the GCC/regional cluster average rather than UAE alone, then
+  // nudged so UAE (the hub) sits right/lower within the cluster instead of
+  // dead-center — reads as a regional hub, not a single-country page.
+  // Centered tighter on the GCC/Levant cluster (less Africa-forward than
+  // before) so the Middle East reads as the dominant region in view.
+  // Pushed further toward the GCC/Levant so the Middle East reads as ~45%
+  // of the visible disc with Africa as supporting context, not the subject.
+  centerLat: 23,
+  centerLon: 51,
+  globeRadius: 1.9,
+  cameraZ: 14.2,
+  cameraTiltDeg: 17,
+  autoRotateSpeed: 0.000035,
+  TEXTURES: {
+    day:      './textures/earth-day.jpg',
+    clouds:   './textures/earth-clouds.png',
+    night:    './textures/earth-night.jpg',   // reserved for a future day/night blend
+    normal:   './textures/earth-normal.jpg',
+    specular: './textures/earth-specular.jpg'
+  }
+};
+/* ================================================================== */
+
+(function starfield(){
+  // Fewer, smaller, dimmer stars — deep space should read as a quiet
+  // backdrop, never compete for attention with the globe itself.
+  const wrap = document.getElementById('stars');
+  const n = 130;
+  for(let i=0;i<n;i++){
+    const s = document.createElement('span');
+    s.style.left = Math.random()*100+'%';
+    s.style.top = Math.random()*100+'%';
+    const sz = Math.random()*1.1+0.4;
+    s.style.width = sz+'px';
+    s.style.height = sz+'px';
+    s.style.animationDelay = (Math.random()*4)+'s';
+    s.style.animationDuration = (3+Math.random()*4)+'s';
+    wrap.appendChild(s);
+  }
+})();
+
+/* ---------- procedural placeholder texture (used until real files exist) ---------- */
+function buildProceduralTextures(size){
+  const c = document.createElement('canvas');
+  c.width = size; c.height = size/2;
+  const ctx = c.getContext('2d');
+  const grad = ctx.createLinearGradient(0,0,0,c.height);
+  grad.addColorStop(0,'#0a2a52'); grad.addColorStop(0.5,'#0e3f73'); grad.addColorStop(1,'#0a2a52');
+  ctx.fillStyle = grad; ctx.fillRect(0,0,c.width,c.height);
+
+  function blob(cx,cy,rx,ry,color,rot){
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.ellipse(cx*c.width, cy*c.height, rx*c.width, ry*c.height, rot||0, 0, Math.PI*2);
+    ctx.fill();
+  }
+  const land='#356b3f', land2='#3f7a45', sand='#9c8a5a', sandLight='#b6a06a', snow='#dfe7ea';
+  blob(0.555,0.46,0.045,0.07, sandLight, 0.2);
+  blob(0.565,0.42,0.03,0.04, sand, 0.1);
+  blob(0.58,0.56,0.06,0.11, land, 0);
+  blob(0.52,0.62,0.085,0.18, sand, 0);
+  blob(0.50,0.50,0.06,0.10, land2, 0.1);
+  blob(0.52,0.22,0.06,0.05, land2, 0);
+  blob(0.46,0.18,0.03,0.025, snow, 0);
+  blob(0.70,0.28,0.13,0.11, land, 0.05);
+  blob(0.80,0.22,0.07,0.05, snow, 0);
+  blob(0.78,0.44,0.075,0.07, land2, 0);
+  blob(0.18,0.24,0.065,0.09, land2, -0.1);
+  blob(0.20,0.50,0.05,0.14, land, 0.05);
+  blob(0.84,0.68,0.05,0.04, sandLight, 0);
+  for(let i=0;i<14000;i++){
+    const x=Math.random()*c.width, y=Math.random()*c.height, a=Math.random()*0.05;
+    ctx.fillStyle = `rgba(255,255,255,${a})`; ctx.fillRect(x,y,1,1);
+  }
+  const dayTexture = new THREE.Texture(c); dayTexture.needsUpdate = true;
+
+  const cc = document.createElement('canvas');
+  cc.width = size; cc.height = size/2;
+  const cctx = cc.getContext('2d');
+  for(let i=0;i<320;i++){
+    const x=Math.random()*cc.width, y=Math.random()*cc.height, r=8+Math.random()*46, a=0.04+Math.random()*0.16;
+    const g = cctx.createRadialGradient(x,y,0,x,y,r);
+    g.addColorStop(0, `rgba(255,255,255,${a})`); g.addColorStop(1,'rgba(255,255,255,0)');
+    cctx.fillStyle = g; cctx.beginPath(); cctx.arc(x,y,r,0,Math.PI*2); cctx.fill();
+  }
+  const cloudTexture = new THREE.Texture(cc); cloudTexture.needsUpdate = true;
+  return { dayTexture, cloudTexture };
+}
+
+/* ---------- lat/lon -> sphere position ---------- */
+function latLonToVec3(lat, lon, radius){
+  const phi = (90 - lat) * (Math.PI/180);
+  const theta = (lon + 180) * (Math.PI/180);
+  return new THREE.Vector3(
+    -radius * Math.sin(phi) * Math.cos(theta),
+     radius * Math.cos(phi),
+     radius * Math.sin(phi) * Math.sin(theta)
+  );
+}
+
+/* ============================ THREE.JS SCENE ============================ */
+const wrap = document.getElementById('globeWrap');
+const canvas = document.getElementById('globeCanvas');
+const markersEl = document.getElementById('markers');
+const arcsSvg = document.getElementById('arcs');
+const markerObjs = {};
+let hubGlowEl;
+let renderer, scene, camera, globe, clouds, atmosphere, nightMesh;
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- cinematic intro timeline (Phase 2) ----------
+   All timings are deliberately under the "would Apple ship this" bar:
+   restrained, no bounce/spring/overshoot, finishes and goes still.
+   reduceMotion short-circuits everything to the final resting state. */
+const DOLLY_START_FACTOR = 1.065;   // camera starts ~6.5% farther back
+const DOLLY_MS = 2800;              // 2.8s camera dolly-in
+const ATMO_MS = 600;                // atmospheric sunrise-style reveal
+const HUB_REVEAL_START = 600, HUB_REVEAL_MS = 800;   // UAE glow ramps in
+const LABEL_START = 1400, LABEL_STEP = 130;          // staggered label entrance
+const INTRO_TOTAL_MS = reduceMotion ? 0 : 3000;      // before idle auto-rotate resumes
+let introStart = performance.now();
+let hubRevealed = reduceMotion;
+let lastReleaseTime = -1e9; // far in the past so idle auto-rotate is full-speed once intro ends
+
+function isCompact(){ return window.innerWidth <= 880; }
+
+function initScene(){
+  renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true, precision:'highp' });
+  // Adaptive DPR: full retina sharpness on desktop, capped lower on phones
+  // where GPU headroom is tighter and the screen is smaller anyway.
+  const dprCap = window.innerWidth <= 880 ? 1.5 : 2;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprCap));
+  if('outputColorSpace' in renderer){ renderer.outputColorSpace = THREE.SRGBColorSpace; }
+  else if('outputEncoding' in renderer){ renderer.outputEncoding = THREE.sRGBEncoding; }
+  // r128 supports both of these as renderer-level flags; feature-detected
+  // so this stays safe if loaded against a different Three.js build later.
+  if('physicallyCorrectLights' in renderer){ renderer.physicallyCorrectLights = true; }
+  if('ACESFilmicToneMapping' in THREE){
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+  }
+
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(28, 1, 0.1, 100);
+  // Camera sits slightly above the globe looking down, rather than dead-on
+  // — same distance/FOV, just elevated, for a more cinematic "satellite
+  // survey" framing instead of a flat passport-photo angle.
+  const tilt = (CONFIG.cameraTiltDeg||0) * Math.PI/180;
+  // Earth is already visible on load, just ~6.5% farther away than its
+  // resting composition — the dolly (handled in animate()) eases it in
+  // over 2.8s. No fade-in, no fly-in from off-screen.
+  const initialDist = reduceMotion ? CONFIG.cameraZ : CONFIG.cameraZ * DOLLY_START_FACTOR;
+  camera.position.set(0, initialDist*Math.sin(tilt), initialDist*Math.cos(tilt));
+  camera.lookAt(0,0,0);
+
+  // Hemisphere light does the fill work now (cool sky tint above, warm/dark
+  // ground tint below) so flat ambient can drop — that's what was washing
+  // the deserts out. Sun raised slightly since ACES compresses highlights.
+  scene.add(new THREE.HemisphereLight(0x3f6aa0, 0x1c130a, 0.38));
+  scene.add(new THREE.AmbientLight(0x33425f, 0.18));
+  const sun = new THREE.DirectionalLight(0xfff2df, 1.3);
+  sun.position.set(-3.2, 2.6, 3.2);
+  scene.add(sun);
+  const rim = new THREE.DirectionalLight(0x6fa8ff, 0.3);
+  rim.position.set(3, -1, -2);
+  scene.add(rim);
+
+  const geo = new THREE.SphereGeometry(CONFIG.globeRadius, 96, 96);
+  // Higher shininess = tighter, smaller highlight (water glint) rather than
+  // a broad sheen across the whole sphere; specular color stays dark/muted
+  // so even at the glint point it's not a white mirror. The specularMap
+  // (loaded below) does the real work of keeping land matte vs ocean lit.
+  const mat = new THREE.MeshPhongMaterial({
+    shininess: 18,
+    specular: new THREE.Color(0x1c2c3a)
+  });
+  globe = new THREE.Mesh(geo, mat);
+  scene.add(globe);
+
+  const cloudGeo = new THREE.SphereGeometry(CONFIG.globeRadius*1.008, 96, 96);
+  const cloudMat = new THREE.MeshPhongMaterial({
+    transparent:true, opacity:0.28, depthWrite:false,
+    shininess:18, specular:new THREE.Color(0x33404a)
+  });
+  clouds = new THREE.Mesh(cloudGeo, cloudMat);
+  scene.add(clouds);
+
+  // Thin, near-invisible scattering rim rather than a glowing halo: shell
+  // pulled in tighter still (1.035x), falloff narrowed further so the glow
+  // only exists in a slim band right at the limb, color desaturated a touch
+  // to avoid any neon read.
+  const atmoGeo = new THREE.SphereGeometry(CONFIG.globeRadius*1.03, 96, 96);
+  const atmoMat = new THREE.ShaderMaterial({
+    transparent:true, side:THREE.BackSide, blending:THREE.AdditiveBlending, depthWrite:false,
+    // uIntensity drives the sunrise-style atmospheric reveal on load (and a
+    // near-imperceptible idle "breathing" afterward) without touching the
+    // base fresnel math.
+    uniforms:{ uIntensity:{ value: reduceMotion ? 1 : 0 } },
+    vertexShader:`
+      varying vec3 vNormal;
+      varying vec3 vWorldPos;
+      void main(){
+        vNormal = normalize(normalMatrix * normal);
+        vWorldPos = (modelMatrix * vec4(position,1.0)).xyz;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+      }`,
+    // True view-dependent fresnel (uses the real camera position, correct
+    // now that the camera is tilted off-axis) instead of a hardcoded +Z
+    // view vector — a thin, physically-motivated rim rather than a flat ring.
+    fragmentShader:`
+      uniform float uIntensity;
+      varying vec3 vNormal;
+      varying vec3 vWorldPos;
+      void main(){
+        vec3 viewDir = normalize(cameraPosition - vWorldPos);
+        float intensity = pow(0.58 - dot(vNormal, viewDir), 7.5);
+        gl_FragColor = vec4(0.5, 0.7, 0.95, 1.0) * intensity * 0.22 * uIntensity;
+      }`
+  });
+  atmosphere = new THREE.Mesh(atmoGeo, atmoMat);
+  scene.add(atmosphere);
+
+  // Derived from latLonToVec3's convention so the chosen lon truly faces
+  // the camera (+Z): rotation.y = -lon(rad) - 90deg.
+  globe.rotation.y = -(CONFIG.centerLon * Math.PI/180) - Math.PI/2;
+  globe.rotation.x = (CONFIG.centerLat * Math.PI/180) * 0.18;
+  clouds.rotation.copy(globe.rotation);
+
+  if(!reduceMotion){
+    document.getElementById('scene').classList.add('intro-pending');
+  }
+
+  loadTextures();
+  resizeRenderer();
+  scheduleIntroReveals();
+  animate();
+}
+
+/* One-shot timers for the discrete reveal beats (label stagger, hub glow,
+   handing control back to idle CSS animations). The continuous beats —
+   camera dolly, atmosphere ramp, shimmer/twinkle — are driven per-frame
+   in animate() instead, since those need easing every tick, not a single
+   state flip. */
+function scheduleIntroReveals(){
+  if(reduceMotion){
+    hubRevealed = true;
+    CONFIG.countries.forEach(c=>{ markerObjs[c.id].revealed = true; });
+    return;
+  }
+  setTimeout(()=>{ hubRevealed = true; }, HUB_REVEAL_START);
+  // UAE, KSA, Qatar, Syria — in that order, per the brief.
+  const order = ['uae','ksa','qatar','syria'];
+  order.forEach((id, i)=>{
+    setTimeout(()=>{
+      if(markerObjs[id]) markerObjs[id].revealed = true;
+    }, LABEL_START + i*LABEL_STEP);
+  });
+  setTimeout(()=>{
+    document.getElementById('scene').classList.remove('intro-pending');
+  }, INTRO_TOTAL_MS);
+}
+
+/* Loads /textures/earth-day.jpg + earth-clouds.png; falls back to a
+   procedural placeholder texture if those files aren't present yet. */
+function applyTextureQuality(tex){
+  if('SRGBColorSpace' in THREE){ tex.colorSpace = THREE.SRGBColorSpace; }
+  else { tex.encoding = THREE.sRGBEncoding; }
+  // Max anisotropic filtering + mipmaps keeps the high-res map crisp at
+  // grazing angles without any artificial sharpening (pixelRatio stays
+  // capped at 2 — that wasn't the bottleneck, filtering quality was).
+  tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  tex.generateMipmaps = true;
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.needsUpdate = true;
+  return tex;
+}
+
+// Re-draws a loaded image onto a power-of-two canvas. Three.js silently
+// disables mipmapping for NPOT textures on some WebGL1 contexts (regardless
+// of explicit filter settings), which causes aliased/"pixelated" minification.
+// Our source is 5400x2700 (not POT) — 4096x2048 stays visually lossless at
+// any on-screen globe size while guaranteeing mipmaps work everywhere.
+function toPowerOfTwoTexture(image, w, h){
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  c.getContext('2d').drawImage(image, 0, 0, w, h);
+  const tex = new THREE.Texture(c);
+  tex.needsUpdate = true;
+  return tex;
+}
+
+// Adaptive resolution: desktop gets the full 4K-equivalent canvas (the
+// practical ceiling for a 2:1 sphere wrap at any size this globe renders
+// on screen), tablets step down, phones step down further — never paying
+// for texel density the device/viewport can't actually resolve.
+function adaptiveSize(baseW, baseH){
+  const w = window.innerWidth;
+  const factor = w <= 880 ? 0.5 : (w <= 1400 ? 0.75 : 1);
+  return [Math.round(baseW*factor), Math.round(baseH*factor)];
+}
+
+function loadTextures(){
+  const loader = new THREE.TextureLoader();
+  let fallbackBuilt = null;
+  function fallback(){
+    if(!fallbackBuilt) fallbackBuilt = buildProceduralTextures(2048);
+    return fallbackBuilt;
+  }
+  loader.load(CONFIG.TEXTURES.day,
+    tex=>{
+      const [w,h] = adaptiveSize(4096,2048);
+      const pot = toPowerOfTwoTexture(tex.image, w, h);
+      globe.material.map = applyTextureQuality(pot);
+      globe.material.needsUpdate = true;
+    },
+    undefined,
+    ()=>{
+      console.warn('Real Earth texture not found at', CONFIG.TEXTURES.day, '— using placeholder.');
+      globe.material.map = applyTextureQuality(fallback().dayTexture); globe.material.needsUpdate = true;
+    }
+  );
+  loader.load(CONFIG.TEXTURES.clouds,
+    tex=>{
+      const [w,h] = adaptiveSize(2048,1024);
+      const pot = toPowerOfTwoTexture(tex.image, w, h);
+      clouds.material.map = applyTextureQuality(pot);
+      clouds.material.needsUpdate = true;
+    },
+    undefined,
+    ()=>{
+      // Clouds are optional dressing; only fall back on this layer, never on the day map.
+      clouds.material.map = applyTextureQuality(fallback().cloudTexture); clouds.material.needsUpdate = true;
+    }
+  );
+
+  // City-lights layer is fully optional: only built if earth-night.jpg exists.
+  // No fallback, no warning — silently skipped when the file is missing.
+  loader.load(CONFIG.TEXTURES.night,
+    tex=>{
+      const [w,h] = adaptiveSize(4096,2048);
+      const pot = toPowerOfTwoTexture(tex.image, w, h);
+      applyTextureQuality(pot);
+      buildNightLights(pot);
+    },
+    undefined,
+    ()=>{ /* optional asset, nothing to do */ }
+  );
+
+  // Normal + specular maps are optional surface detail — applied only if
+  // present, skipped silently (no warning) if either file is missing.
+  // earth-normal.jpg verified NOT to be a usable normal map (it's a
+  // full-color photo, not tangent-space RGB or grayscale relief) — disabled
+  // rather than applied incorrectly. Re-enable once a real normal map exists.
+  loader.load(CONFIG.TEXTURES.specular,
+    tex=>{
+      const [w,h] = adaptiveSize(4096,2048);
+      const pot = toPowerOfTwoTexture(tex.image, w, h);
+      globe.material.specularMap = applyTextureQuality(pot);
+      globe.material.needsUpdate = true;
+    },
+    undefined,
+    ()=>{ /* optional asset, nothing to do */ }
+  );
+}
+
+function buildNightLights(nightTexture){
+  if(nightMesh) return;
+  // Same fixed world-space direction as the "sun" DirectionalLight above,
+  // so lights only appear on the hemisphere actually facing away from it.
+  const sunDir = new THREE.Vector3(-3.2, 2.6, 3.2).normalize();
+  const geo = new THREE.SphereGeometry(CONFIG.globeRadius*1.001, 96, 96);
+  const mat = new THREE.ShaderMaterial({
+    transparent:true, blending:THREE.AdditiveBlending, depthWrite:false,
+    uniforms:{
+      nightTexture:{ value: nightTexture },
+      sunDir:{ value: sunDir },
+      // Driven each frame in animate() with a slow sine — an almost
+      // imperceptible twinkle so the lit side never looks perfectly static.
+      uTwinkle:{ value: 1.0 }
+    },
+    vertexShader:`
+      varying vec3 vWorldNormal;
+      varying vec2 vUv;
+      void main(){
+        vUv = uv;
+        vWorldNormal = normalize(mat3(modelMatrix) * normal);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+      }`,
+    fragmentShader:`
+      uniform sampler2D nightTexture;
+      uniform vec3 sunDir;
+      uniform float uTwinkle;
+      varying vec3 vWorldNormal;
+      varying vec2 vUv;
+      void main(){
+        float lit = dot(vWorldNormal, sunDir);
+        // Ascending edge0 < edge1 (required for defined smoothstep behavior
+        // in GLSL ES 1.00 / WebGL1) — fades in gradually across the terminator
+        // band rather than snapping on at the horizon.
+        float darkness = smoothstep(-0.18, 0.22, -lit);
+        vec3 cityColor = vec3(1.0, 0.78, 0.42); // warm gold, not raw-white
+        float luminance = texture2D(nightTexture, vUv).r;
+        vec3 lights = cityColor * luminance;
+        // Kept deliberately subtle: 0.55 ceiling so lights read as a soft
+        // glow accent, not a bright overlay competing with the day side.
+        gl_FragColor = vec4(lights, 1.0) * darkness * 0.55 * uTwinkle;
+      }`
+  });
+  nightMesh = new THREE.Mesh(geo, mat);
+  nightMesh.rotation.copy(globe.rotation);
+  scene.add(nightMesh);
+}
+
+function resizeRenderer(){
+  if(!renderer) return;
+  const rect = wrap.getBoundingClientRect();
+  renderer.setSize(rect.width, rect.height, false);
+  camera.aspect = rect.width / rect.height;
+  camera.updateProjectionMatrix();
+}
+
+/* ---------- drag-to-rotate with inertia ---------- */
+// Vertical tilt (rotation.x) is set once during init and then locked —
+// drag only ever spins the globe sideways (longitude), never up/down.
+let dragging = false, lastX = 0, lastY = 0, velY = 0, cloudDrift = 0;
+
+function pointerDown(e){
+  if(isCompact()) return;
+  dragging = true;
+  wrap.classList.add('is-dragging');
+  lastX = e.clientX; lastY = e.clientY;
+  velY = 0;
+}
+function pointerMove(e){
+  if(!dragging) return;
+  const dx = e.clientX - lastX;
+  lastX = e.clientX; lastY = e.clientY;
+  // Lower sensitivity + heavier damping (see animate()) = a heavy physical
+  // globe you nudge, not a light one you flick and send spinning.
+  velY = dx * 0.0032;
+  globe.rotation.y += velY;
+  // rotation.x intentionally never touched here — vertical mouse movement
+  // has no effect on tilt, by design.
+}
+function pointerUp(){
+  dragging = false;
+  wrap.classList.remove('is-dragging');
+  lastReleaseTime = performance.now();
+}
+wrap.addEventListener('pointerdown', pointerDown);
+window.addEventListener('pointermove', pointerMove);
+window.addEventListener('pointerup', pointerUp);
+wrap.addEventListener('dragstart', e=>e.preventDefault());
+
+function animate(){
+  requestAnimationFrame(animate);
+  const now = performance.now();
+  const elapsed = now - introStart;
+  const introActive = elapsed < INTRO_TOTAL_MS;
+
+  // --- camera dolly: real distance change, not a scale trick ---
+  if(introActive && !reduceMotion){
+    const t = Math.min(1, elapsed/DOLLY_MS);
+    const eased = 1 - Math.pow(1-t, 3); // ease-out cubic, no overshoot
+    const dist = CONFIG.cameraZ*DOLLY_START_FACTOR + (CONFIG.cameraZ - CONFIG.cameraZ*DOLLY_START_FACTOR)*eased;
+    const tiltRad = (CONFIG.cameraTiltDeg||0) * Math.PI/180;
+    camera.position.set(0, dist*Math.sin(tiltRad), dist*Math.cos(tiltRad));
+    camera.lookAt(0,0,0);
+  }
+
+  // --- atmosphere: sunrise-style reveal, then an almost invisible breathe ---
+  if(atmosphere){
+    const aRamp = reduceMotion ? 1 : Math.min(1, elapsed/ATMO_MS);
+    const shimmer = (!reduceMotion && elapsed > ATMO_MS) ? 0.06*Math.sin(now*0.0005) : 0;
+    atmosphere.material.uniforms.uIntensity.value = Math.max(0, aRamp + (aRamp>=1?shimmer:0));
+  }
+
+  // --- night lights: imperceptible twinkle, never static ---
+  if(nightMesh){
+    nightMesh.material.uniforms.uTwinkle.value = reduceMotion ? 1 : (0.94 + 0.06*Math.sin(now*0.0009 + 1.3));
+  }
+
+  if(!dragging){
+    if(introActive){
+      // Globe holds its framing throughout the dolly — no rotation drift
+      // while the camera is still settling into composition.
+      velY *= 0.965;
+    } else {
+      // After release, coast on inertia alone for ~1s before automatic
+      // rotation eases back in — the handoff should be imperceptible.
+      const sinceRelease = now - lastReleaseTime;
+      const autoFactor = sinceRelease < 1000 ? 0 : Math.min(1, (sinceRelease-1000)/800);
+      if(!reduceMotion) globe.rotation.y += CONFIG.autoRotateSpeed*autoFactor + velY;
+      velY *= 0.965;
+    }
+  }
+  // Clouds always carry their own drift on top of the globe's current
+  // rotation — independent motion even while the globe is being dragged,
+  // not just a copy-then-nudge.
+  if(!reduceMotion) cloudDrift += 0.00018;
+  clouds.rotation.x = globe.rotation.x;
+  clouds.rotation.y = globe.rotation.y + cloudDrift;
+  if(nightMesh) nightMesh.rotation.copy(globe.rotation);
+  renderer.render(scene, camera);
+  updateMarkers();
+}
+
+window.addEventListener('resize', resizeRenderer);
+
+/* ============================ MARKERS + ARCS ============================ */
+const FLAG_SVGS = {
+  uae: `<svg viewBox="0 0 24 18" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="18" fill="#fff"/><rect width="24" height="6" fill="#00732f"/><rect y="12" width="24" height="6" fill="#000"/><rect width="6" height="18" fill="#ff0000"/></svg>`,
+  ksa: `<svg viewBox="0 0 24 18" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="18" fill="#0b5c2e"/><rect x="3" y="7.5" width="14" height="3" fill="#fff"/></svg>`,
+  qatar: `<svg viewBox="0 0 24 18" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="18" fill="#8d1b3d"/><polygon points="0,0 8,0 4,2 8,4 4,6 8,8 4,10 8,12 4,14 8,16 4,18 0,18" fill="#fff"/></svg>`,
+  syria: `<svg viewBox="0 0 24 18" xmlns="http://www.w3.org/2000/svg">
+      <rect width="24" height="18" fill="#007a3d"/>
+      <rect y="6" width="24" height="6" fill="#fff"/>
+      <rect y="12" width="24" height="6" fill="#000"/>
+      <g fill="#ce1126">
+        <polygon points="7,7.6 7.6,9.4 9.4,9.4 7.9,10.5 8.5,12.3 7,11.2 5.5,12.3 6.1,10.5 4.6,9.4 6.4,9.4"/>
+        <polygon points="12,7.6 12.6,9.4 14.4,9.4 12.9,10.5 13.5,12.3 12,11.2 10.5,12.3 11.1,10.5 9.6,9.4 11.4,9.4"/>
+        <polygon points="17,7.6 17.6,9.4 19.4,9.4 17.9,10.5 18.5,12.3 17,11.2 15.5,12.3 16.1,10.5 14.6,9.4 16.4,9.4"/>
+      </g>
+    </svg>`
+};
+
+CONFIG.countries.forEach(c=>{
+  if(c.hub){
+    hubGlowEl = document.createElement('div');
+    hubGlowEl.className = 'hub-glow';
+    // Brightness ramps in slower than the standard .4s reveal — "halo
+    // expands, brightness increases, inner glow stabilizes" reads as a
+    // deliberate illumination, not a UI element popping in.
+    hubGlowEl.style.transition = `opacity ${HUB_REVEAL_MS}ms cubic-bezier(.22,1,.36,1)`;
+    markersEl.appendChild(hubGlowEl);
+  }
+  const dot = document.createElement('div');
+  dot.className = 'marker-dot' + (c.hub ? ' hub' : '');
+  if(c.hub) dot.style.transition = `opacity ${HUB_REVEAL_MS}ms cubic-bezier(.22,1,.36,1)`;
+  markersEl.appendChild(dot);
+
+  // Anchor handles position + one-time entrance; pill inside handles its
+  // own perpetual idle breathing — kept on separate elements so the two
+  // animations never fight over the same transform property.
+  const anchor = document.createElement('div');
+  anchor.className = 'marker-anchor';
+  const pill = document.createElement('div');
+  pill.className = 'marker-pill' + (c.hub ? ' is-hub' : '');
+  pill.innerHTML = `<span class="flag">${FLAG_SVGS[c.id]}</span><span>${c.name}</span>`;
+  // Slightly randomized breathing timing so labels never move in lockstep.
+  pill.style.animation = `labelBreathe ${(6 + Math.random()*2).toFixed(2)}s ease-in-out infinite`;
+  pill.style.animationDelay = `${(Math.random()*1.5).toFixed(2)}s`;
+  anchor.appendChild(pill);
+  markersEl.appendChild(anchor);
+
+  const connector = document.createElement('div');
+  connector.className = 'marker-connector';
+  markersEl.appendChild(connector);
+
+  markerObjs[c.id] = {
+    dot, pill, anchor, connector, cfg: c, revealed:false,
+    vec3: latLonToVec3(c.lat, c.lon, CONFIG.globeRadius)
+  };
+});
+
+function project(vec3){
+  const world = vec3.clone().applyMatrix4(globe.matrixWorld);
+  const dotCam = world.clone().normalize().dot(camera.position.clone().normalize());
+  const projected = world.clone().project(camera);
+  const rect = wrap.getBoundingClientRect();
+  const visible = dotCam > -0.06;
+  const x = rect.left + (projected.x*0.5+0.5) * rect.width;
+  const y = rect.top + (-(projected.y*0.5)+0.5) * rect.height;
+  return { x, y, visible };
+}
+
+function updateMarkers(){
+  const show = !isCompact();
+  CONFIG.countries.forEach(c=>{
+    const m = markerObjs[c.id];
+    const p = project(m.vec3);
+    m.dot.style.left = p.x+'px'; m.dot.style.top = p.y+'px';
+    const labelX = p.x + (c.labelDx||0);
+    const stemTop = p.y - 36 + (c.labelDy||0);
+    m.anchor.style.left = labelX+'px';
+    m.anchor.style.top = stemTop+'px';
+    m.connector.style.left = labelX+'px';
+    m.connector.style.top = stemTop+'px';
+    m.connector.style.height = '28px';
+    const vis = show && p.visible;
+    // UAE's dot/glow appear early (HUB_REVEAL_START, gated by hubRevealed)
+    // since the brief stages "glow illuminates" before "labels enter";
+    // every other country's dot+connector arrive together with its own
+    // label at LABEL_START — the choreography owns first appearance, not
+    // plain visibility/facing.
+    const dotGate = c.hub ? hubRevealed : m.revealed;
+    const visAndRevealed = vis && dotGate;
+    m.dot.style.opacity = visAndRevealed ? '1' : '0';
+    m.connector.style.opacity = (vis && m.revealed) ? '1' : '0';
+    if(m.revealed) m.anchor.classList.add('revealed');
+    m._x = p.x; m._y = p.y; m._visible = vis;
+    if(c.hub && hubGlowEl){
+      hubGlowEl.style.left = p.x+'px';
+      hubGlowEl.style.top = p.y+'px';
+      hubGlowEl.style.opacity = (vis && hubRevealed) ? '1' : '0';
+    }
+  });
+  drawArcs(show);
+}
+
+function drawArcs(show){
+  // Connection lines are paused for this pass — the regional presence
+  // visualization is being redesigned separately. Logic below is left
+  // intact so it's a one-line flip to bring back.
+  const SHOW_ARCS = false;
+  if(!SHOW_ARCS || !show){ arcsSvg.innerHTML=''; return; }
+  const hub = markerObjs[CONFIG.hubId];
+  if(!hub._visible){ arcsSvg.innerHTML=''; return; }
+  let inner = `
+    <defs>
+      <filter id="arcGlow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="2.2" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>`;
+  CONFIG.countries.forEach(c=>{
+    if(c.id === CONFIG.hubId) return;
+    const m = markerObjs[c.id];
+    if(!m._visible) return;
+    const mx = (hub._x+m._x)/2;
+    const my = Math.min(hub._y,m._y) - 60;
+    inner += `
+      <path d="M${hub._x},${hub._y} Q${mx},${my} ${m._x},${m._y}"
+        fill="none" stroke="#f3c63d" stroke-width="1.4" opacity="0.65"
+        filter="url(#arcGlow)" stroke-dasharray="5 9">
+        <animate attributeName="stroke-dashoffset" from="0" to="-140" dur="2.2s" repeatCount="indefinite"/>
+      </path>
+      <circle r="3.2" fill="#fff4d6" filter="url(#arcGlow)">
+        <animateMotion dur="2.6s" repeatCount="indefinite" path="M${hub._x},${hub._y} Q${mx},${my} ${m._x},${m._y}"/>
+      </circle>`;
+  });
+  arcsSvg.innerHTML = inner;
+}
+
+/* ============================ INIT ============================ */
+try{
+  if(window.WebGLRenderingContext && typeof THREE !== 'undefined'){
+    initScene();
+  }
+}catch(e){
+  console.error('Globe failed to initialize', e);
+}
+</script>
+</body>
+</html>
