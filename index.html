@@ -35,7 +35,7 @@
 
   .vignette{
     position:absolute;inset:0;z-index:6;pointer-events:none;
-    box-shadow:inset 0 0 110px 20px rgba(190,212,238,.14);
+    box-shadow:none;
   }
 
   /* ===== Three.js globe stage =====
@@ -44,8 +44,8 @@
      a bright "product shot" composition rather than a bleeding cinematic one. */
   .globe-wrap{
     position:absolute;z-index:2;
-    left:76%;top:50%;
-    width:66vw;height:66vw;
+    left:80%;top:44%;
+    width:80vw;height:80vw;
     transform:translate(-50%,-50%);
     cursor:grab;
   }
@@ -57,13 +57,13 @@
   .globe-wrap canvas.ready{opacity:1;}
   .globe-glow{
     position:absolute;z-index:1;
-    left:76%;top:50%;
-    width:66vw;height:66vw;
-    transform:translate(-50%,-50%) scale(1.05);
+    left:80%;top:44%;
+    width:80vw;height:80vw;
+    transform:translate(-50%,-50%) scale(1.12);
     border-radius:50%;
     pointer-events:none;
-    background:radial-gradient(circle, rgba(255,255,255,0) 70%, rgba(255,255,255,.55) 82%, rgba(255,255,255,0) 94%);
-    filter:blur(6px);
+    background:radial-gradient(circle, rgba(255,255,255,0) 62%, rgba(255,250,235,.45) 76%, rgba(255,255,255,0) 96%);
+    filter:blur(18px);
   }
 
   svg#arcs{position:absolute;z-index:3;pointer-events:none;overflow:visible;width:100%;height:100%;top:0;left:0;}
@@ -250,7 +250,7 @@
 
   @media (max-width:1080px){
     .panel{width:44vw;}
-    .globe-wrap, .globe-glow{width:78vw;height:78vw;left:78%;top:50%;}
+    .globe-wrap, .globe-glow{width:92vw;height:92vw;left:80%;top:44%;}
     .nav-right .pill-btn span{display:none;}
   }
 
@@ -387,10 +387,13 @@ const CONFIG = {
   // before) so the Middle East reads as the dominant region in view.
   // Pushed further toward the GCC/Levant so the Middle East reads as ~45%
   // of the visible disc with Africa as supporting context, not the subject.
-  centerLat: 23,
-  centerLon: 51,
+  // Recentered to favor Europe/Mediterranean/North Africa/Arabia/Western Asia
+  // together (less open Atlantic) and pulled the camera in close for an
+  // immersive, world.modon.com-style "Earth intrudes into the layout" feel.
+  centerLat: 32,
+  centerLon: 35,
   globeRadius: 1.9,
-  cameraZ: 14.2,
+  cameraZ: 7.0,
   cameraTiltDeg: 17,
   autoRotateSpeed: 0.000035,
   TEXTURES: {
@@ -546,7 +549,7 @@ function initScene(){
   // the deserts out. Sun raised slightly since ACES compresses highlights.
   scene.add(new THREE.HemisphereLight(0xcfe6ff, 0x4a3a28, 0.65));
   scene.add(new THREE.AmbientLight(0x6b87b8, 0.36));
-  const sun = new THREE.DirectionalLight(0xfff6e8, 1.55);
+  const sun = new THREE.DirectionalLight(0xffe9c2, 1.85);
   sun.position.set(-3.2, 2.6, 3.2);
   scene.add(sun);
   const rim = new THREE.DirectionalLight(0x6fa8ff, 0.3);
@@ -567,8 +570,8 @@ function initScene(){
 
   const cloudGeo = new THREE.SphereGeometry(CONFIG.globeRadius*1.008, 96, 96);
   const cloudMat = new THREE.MeshPhongMaterial({
-    transparent:true, opacity:0.28, depthWrite:false,
-    shininess:18, specular:new THREE.Color(0x33404a)
+    transparent:true, opacity:0.34, depthWrite:false,
+    shininess:26, specular:new THREE.Color(0x4a5868)
   });
   clouds = new THREE.Mesh(cloudGeo, cloudMat);
   scene.add(clouds);
@@ -576,7 +579,7 @@ function initScene(){
   // Daylight variant: a bigger, brighter, whiter bloom instead of the thin
   // "almost invisible" rim used in the dark cinematic version — reads as a
   // sunlit atmospheric glow against a bright sky, matching the reference.
-  const atmoGeo = new THREE.SphereGeometry(CONFIG.globeRadius*1.07, 96, 96);
+  const atmoGeo = new THREE.SphereGeometry(CONFIG.globeRadius*1.14, 96, 96);
   const atmoMat = new THREE.ShaderMaterial({
     transparent:true, side:THREE.BackSide, blending:THREE.AdditiveBlending, depthWrite:false,
     // uIntensity drives the sunrise-style atmospheric reveal on load (and a
@@ -600,8 +603,8 @@ function initScene(){
       varying vec3 vWorldPos;
       void main(){
         vec3 viewDir = normalize(cameraPosition - vWorldPos);
-        float intensity = pow(0.62 - dot(vNormal, viewDir), 4.2);
-        gl_FragColor = vec4(0.85, 0.92, 1.0, 1.0) * intensity * 0.65 * uIntensity;
+        float intensity = pow(0.7 - dot(vNormal, viewDir), 2.6);
+        gl_FragColor = vec4(0.95, 0.94, 0.88, 1.0) * intensity * 0.8 * uIntensity;
       }`
   });
   atmosphere = new THREE.Mesh(atmoGeo, atmoMat);
