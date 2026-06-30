@@ -30,7 +30,8 @@
   .scene{
     position:relative;width:100vw;height:100vh;overflow:hidden;
     background:
-      radial-gradient(ellipse 46% 38% at 87% 11%, rgba(255,247,222,.85) 0%, rgba(255,247,222,0) 62%),
+      /* warm sun flare relocated near the UAE/lower-right limb of the globe */
+      radial-gradient(ellipse 42% 36% at 88% 58%, rgba(255,238,200,.8) 0%, rgba(255,238,200,0) 60%),
       radial-gradient(circle at 78.4% 42%, rgba(214,234,255,.5) 0%, rgba(214,234,255,0) 64%),
       radial-gradient(ellipse 70% 60% at 82% 25%, rgba(255,255,255,.95) 0%, rgba(225,240,255,0) 55%),
       radial-gradient(ellipse 80% 70% at 70% 50%, #f7fbff 0%, #ecf4fc 55%, #dfedfb 100%);
@@ -50,7 +51,7 @@
   .globe-wrap{
     position:absolute;z-index:2;
     left:78.4%;top:42%;
-    width:96vw;height:96vw;
+    width:100vw;height:100vw;
     transform:translate(-50%,-50%);
     cursor:grab;
   }
@@ -63,14 +64,14 @@
   .globe-glow{
     position:absolute;z-index:1;
     left:78.4%;top:42%;
-    width:96vw;height:96vw;
+    width:100vw;height:100vw;
     transform:translate(-50%,-50%) scale(1.12);
     border-radius:50%;
     pointer-events:none;
-    /* Thinned to match the GLSL atmosphere rim — narrower band, lower
-       opacity, so it reads as a faint edge glow rather than a halo. */
-    background:radial-gradient(circle, rgba(255,255,255,0) 68%, rgba(255,250,235,.18) 78%, rgba(255,255,255,0) 90%);
-    filter:blur(14px);
+    /* Widened to match the brighter atmosphere halo in the reference —
+       soft white-blue glow extending well past the limb, blurred large. */
+    background:radial-gradient(circle, rgba(255,255,255,0) 58%, rgba(220,238,255,.42) 72%, rgba(255,255,255,0) 92%);
+    filter:blur(22px);
   }
 
   svg#arcs{position:absolute;z-index:3;pointer-events:none;overflow:visible;width:100%;height:100%;top:0;left:0;}
@@ -411,7 +412,7 @@ const CONFIG = {
   // larger planet, farther camera, more curvature, not a smaller globe.
   // Radius then trimmed ~12% (cameraZ/FOV untouched, so no fisheye) to give
   // more breathing room around the full disc per the reference comparison.
-  globeRadius: 2.93,
+  globeRadius: 4.2,
   cameraZ: 16.56,
   cameraTiltDeg: 17,
   autoRotateSpeed: 0.000035,
@@ -618,10 +619,9 @@ function initScene(){
   clouds = new THREE.Mesh(cloudGeo, cloudMat);
   scene.add(clouds);
 
-  // Thinned back down to a near-invisible blue rim — shell pulled in from
-  // 1.14x to 1.05x radius so the glow hugs the limb instead of forming a
-  // thick halo around the whole disc.
-  const atmoGeo = new THREE.SphereGeometry(CONFIG.globeRadius*1.05, 96, 96);
+  // Brought back to a visible bright halo (reference shows a pronounced
+  // glowing rim, not a near-invisible edge) — shell widened back to 1.12x.
+  const atmoGeo = new THREE.SphereGeometry(CONFIG.globeRadius*1.12, 96, 96);
   const atmoMat = new THREE.ShaderMaterial({
     transparent:true, side:THREE.BackSide, blending:THREE.AdditiveBlending, depthWrite:false,
     // uIntensity drives the sunrise-style atmospheric reveal on load (and a
@@ -645,11 +645,11 @@ function initScene(){
       varying vec3 vWorldPos;
       void main(){
         vec3 viewDir = normalize(cameraPosition - vWorldPos);
-        // Even tighter/thinner rim than before (power 3.4→4.2, threshold
-        // 0.65→0.6) and lower multiplier (0.52→0.32) — the atmosphere should
-        // almost disappear into the page background, just a faint blue edge.
-        float intensity = pow(0.6 - dot(vNormal, viewDir), 4.2);
-        gl_FragColor = vec4(0.72, 0.88, 1.0, 1.0) * intensity * 0.32 * uIntensity;
+        // Reference shows a bright soft halo — opened back up: wider threshold
+        // (0.68), softer falloff (2.8), stronger multiplier (0.72) for a
+        // luminous sky-blue rim that still stays soft rather than hard.
+        float intensity = pow(0.68 - dot(vNormal, viewDir), 2.8);
+        gl_FragColor = vec4(0.78, 0.91, 1.0, 1.0) * intensity * 0.72 * uIntensity;
       }`
   });
   atmosphere = new THREE.Mesh(atmoGeo, atmoMat);
