@@ -44,8 +44,8 @@
      a bright "product shot" composition rather than a bleeding cinematic one. */
   .globe-wrap{
     position:absolute;z-index:2;
-    left:80%;top:44%;
-    width:80vw;height:80vw;
+    left:76%;top:42%;
+    width:96vw;height:96vw;
     transform:translate(-50%,-50%);
     cursor:grab;
   }
@@ -57,8 +57,8 @@
   .globe-wrap canvas.ready{opacity:1;}
   .globe-glow{
     position:absolute;z-index:1;
-    left:80%;top:44%;
-    width:80vw;height:80vw;
+    left:76%;top:42%;
+    width:96vw;height:96vw;
     transform:translate(-50%,-50%) scale(1.12);
     border-radius:50%;
     pointer-events:none;
@@ -250,7 +250,7 @@
 
   @media (max-width:1080px){
     .panel{width:44vw;}
-    .globe-wrap, .globe-glow{width:92vw;height:92vw;left:80%;top:44%;}
+    .globe-wrap, .globe-glow{width:92vw;height:92vw;left:76%;top:42%;}
     .nav-right .pill-btn span{display:none;}
   }
 
@@ -390,10 +390,14 @@ const CONFIG = {
   // Recentered to favor Europe/Mediterranean/North Africa/Arabia/Western Asia
   // together (less open Atlantic) and pulled the camera in close for an
   // immersive, world.modon.com-style "Earth intrudes into the layout" feel.
-  centerLat: 32,
-  centerLon: 35,
-  globeRadius: 1.9,
-  cameraZ: 7.0,
+  // Pulled back to an orbital/satellite-photo distance with a bigger sphere
+  // to compensate — large and immersive without the close-up fisheye bulge
+  // that was over-emphasizing Africa. Centered to balance Europe/
+  // Mediterranean/North Africa/Arabia/Western Asia together.
+  centerLat: 30,
+  centerLon: 40,
+  globeRadius: 2.3,
+  cameraZ: 10.5,
   cameraTiltDeg: 17,
   autoRotateSpeed: 0.000035,
   TEXTURES: {
@@ -532,7 +536,7 @@ function initScene(){
   }
 
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(28, 1, 0.1, 100);
+  camera = new THREE.PerspectiveCamera(31, 1, 0.1, 100);
   // Camera sits slightly above the globe looking down, rather than dead-on
   // — same distance/FOV, just elevated, for a more cinematic "satellite
   // survey" framing instead of a flat passport-photo angle.
