@@ -44,7 +44,7 @@
      a bright "product shot" composition rather than a bleeding cinematic one. */
   .globe-wrap{
     position:absolute;z-index:2;
-    left:76%;top:42%;
+    left:77.3%;top:42%;
     width:96vw;height:96vw;
     transform:translate(-50%,-50%);
     cursor:grab;
@@ -57,12 +57,12 @@
   .globe-wrap canvas.ready{opacity:1;}
   .globe-glow{
     position:absolute;z-index:1;
-    left:76%;top:42%;
+    left:77.3%;top:42%;
     width:96vw;height:96vw;
     transform:translate(-50%,-50%) scale(1.12);
     border-radius:50%;
     pointer-events:none;
-    background:radial-gradient(circle, rgba(255,255,255,0) 62%, rgba(255,250,235,.45) 76%, rgba(255,255,255,0) 96%);
+    background:radial-gradient(circle, rgba(255,255,255,0) 62%, rgba(255,250,235,.34) 76%, rgba(255,255,255,0) 96%);
     filter:blur(18px);
   }
 
@@ -250,7 +250,7 @@
 
   @media (max-width:1080px){
     .panel{width:44vw;}
-    .globe-wrap, .globe-glow{width:92vw;height:92vw;left:76%;top:42%;}
+    .globe-wrap, .globe-glow{width:92vw;height:92vw;left:77.3%;top:42%;}
     .nav-right .pill-btn span{display:none;}
   }
 
@@ -394,10 +394,13 @@ const CONFIG = {
   // to compensate — large and immersive without the close-up fisheye bulge
   // that was over-emphasizing Africa. Centered to balance Europe/
   // Mediterranean/North Africa/Arabia/Western Asia together.
-  centerLat: 26,
-  centerLon: 66.5,
-  globeRadius: 2.3,
-  cameraZ: 10.5,
+  // Composition tuned visually (not by marker coordinates): wider/farther
+  // camera for real spherical curvature, rotated to hold Europe and Arabia
+  // in frame together without Africa crowding the disc.
+  centerLat: 34,
+  centerLon: 50,
+  globeRadius: 2.5,
+  cameraZ: 12.5,
   cameraTiltDeg: 17,
   autoRotateSpeed: 0.000035,
   TEXTURES: {
@@ -536,7 +539,7 @@ function initScene(){
   }
 
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(31, 1, 0.1, 100);
+  camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
   // Camera sits slightly above the globe looking down, rather than dead-on
   // — same distance/FOV, just elevated, for a more cinematic "satellite
   // survey" framing instead of a flat passport-photo angle.
@@ -608,7 +611,7 @@ function initScene(){
       void main(){
         vec3 viewDir = normalize(cameraPosition - vWorldPos);
         float intensity = pow(0.7 - dot(vNormal, viewDir), 2.6);
-        gl_FragColor = vec4(0.95, 0.94, 0.88, 1.0) * intensity * 0.8 * uIntensity;
+        gl_FragColor = vec4(0.95, 0.94, 0.88, 1.0) * intensity * 0.6 * uIntensity;
       }`
   });
   atmosphere = new THREE.Mesh(atmoGeo, atmoMat);
