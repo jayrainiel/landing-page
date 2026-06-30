@@ -535,7 +535,10 @@ function initScene(){
   if('physicallyCorrectLights' in renderer){ renderer.physicallyCorrectLights = true; }
   if('ACESFilmicToneMapping' in THREE){
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.55;
+    // Pulled slightly from 1.55: ACES compresses highlights aggressively at
+    // high exposure — 1.42 keeps ocean whites and cloud tops from blowing out
+    // while giving terrain and coastlines more tonal separation.
+    renderer.toneMappingExposure = 1.42;
   }
 
   scene = new THREE.Scene();
@@ -551,15 +554,26 @@ function initScene(){
   camera.position.set(0, initialDist*Math.sin(tilt), initialDist*Math.cos(tilt));
   camera.lookAt(0,0,0);
 
-  // Hemisphere light does the fill work now (cool sky tint above, warm/dark
-  // ground tint below) so flat ambient can drop — that's what was washing
-  // the deserts out. Sun raised slightly since ACES compresses highlights.
-  scene.add(new THREE.HemisphereLight(0xcfe6ff, 0x4a3a28, 0.65));
-  scene.add(new THREE.AmbientLight(0x6b87b8, 0.36));
-  const sun = new THREE.DirectionalLight(0xffe9c2, 1.85);
+  // Cool sky hemisphere above, warm earth below — primary fill for the
+  // shadow hemisphere so oceans read as blue rather than grey.
+  scene.add(new THREE.HemisphereLight(0xa8c8f0, 0x3d2e18, 0.72));
+  // Low ambient so directional lights carve tonal contrast into terrain —
+  // less flat-grey wash on continents.
+  scene.add(new THREE.AmbientLight(0x4a6890, 0.20));
+  // Warm afternoon sun from upper-right; 2.0 gives strong but not blown-out
+  // highlights on cloud tops and North Africa sand.
+  const sun = new THREE.DirectionalLight(0xffd090, 2.0);
   sun.position.set(-3.2, 2.6, 3.2);
   scene.add(sun);
-  const rim = new THREE.DirectionalLight(0x6fa8ff, 0.3);
+  // Soft cool-blue fill from the left/shadow side — gives oceans a richer
+  // deep-blue where the sun doesn't reach, and separates the dark hemisphere
+  // from pure black.
+  const fill = new THREE.DirectionalLight(0x3a7acc, 0.48);
+  fill.position.set(3.5, 0.5, 1.5);
+  scene.add(fill);
+  // Subtle rim on the far limb — keeps the dark hemisphere edge visible
+  // against the page background without looking like a second sun.
+  const rim = new THREE.DirectionalLight(0x6fa8ff, 0.22);
   rim.position.set(3, -1, -2);
   scene.add(rim);
 
@@ -569,16 +583,21 @@ function initScene(){
   // so even at the glint point it's not a white mirror. The specularMap
   // (loaded below) does the real work of keeping land matte vs ocean lit.
   const mat = new THREE.MeshPhongMaterial({
-    shininess: 18,
-    specular: new THREE.Color(0x1c2c3a)
+    // Higher shininess = tighter ocean glint; specularMap keeps land matte.
+    // Richer blue-slate specular colour so ocean highlights read as sunlit
+    // water rather than a generic white/grey gloss.
+    shininess: 32,
+    specular: new THREE.Color(0x2a4a6a)
   });
   globe = new THREE.Mesh(geo, mat);
   scene.add(globe);
 
   const cloudGeo = new THREE.SphereGeometry(CONFIG.globeRadius*1.008, 96, 96);
   const cloudMat = new THREE.MeshPhongMaterial({
-    transparent:true, opacity:0.34, depthWrite:false,
-    shininess:26, specular:new THREE.Color(0x4a5868)
+    // Reduced opacity so cloud layer sits as transparent wisp over terrain —
+    // less muddy overlap, terrain stays readable through thin cloud cover.
+    transparent:true, opacity:0.26, depthWrite:false,
+    shininess:18, specular:new THREE.Color(0x3a4858)
   });
   clouds = new THREE.Mesh(cloudGeo, cloudMat);
   scene.add(clouds);
@@ -610,8 +629,11 @@ function initScene(){
       varying vec3 vWorldPos;
       void main(){
         vec3 viewDir = normalize(cameraPosition - vWorldPos);
-        float intensity = pow(0.7 - dot(vNormal, viewDir), 2.6);
-        gl_FragColor = vec4(0.95, 0.94, 0.88, 1.0) * intensity * 0.6 * uIntensity;
+        // Higher power (3.4) = tighter, thinner fresnel rim — elegant halo
+        // rather than a thick white band. Threshold 0.65 keeps it close to
+        // the limb. Cool-blue tint reads as scattered skylight, not a glow.
+        float intensity = pow(0.65 - dot(vNormal, viewDir), 3.4);
+        gl_FragColor = vec4(0.72, 0.88, 1.0, 1.0) * intensity * 0.52 * uIntensity;
       }`
   });
   atmosphere = new THREE.Mesh(atmoGeo, atmoMat);
@@ -713,7 +735,11 @@ function loadTextures(){
   loader.load(CONFIG.TEXTURES.day,
     tex=>{
       const [w,h] = adaptiveSize(4096,2048);
-      const pot = toPowerOfTwoTexture(tex.image, w, h, 'brightness(1.06) contrast(0.88) saturate(1.08)');
+      // contrast(0.88) was softening terrain — raised to 1.07 for sharper
+      // coastlines and land/sea separation. Brightness pulled back to 1.0
+      // so highlights don't blow out under ACES. Saturation 1.14 lifts
+      // ocean blue and forest green without oversaturating desert sand.
+      const pot = toPowerOfTwoTexture(tex.image, w, h, 'brightness(1.0) contrast(1.07) saturate(1.14)');
       globe.material.map = applyTextureQuality(pot);
       globe.material.needsUpdate = true;
       canvas.classList.add('ready');
