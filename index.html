@@ -23,12 +23,17 @@
   body{font-family:'Inter',sans-serif;color:var(--ink);}
 
   /* Bright daylight sky instead of a dark space scene — soft blue-white
-     gradient, sunlit toward the upper-right where the globe's lit limb sits. */
+     gradient, sunlit toward the upper-right where the globe's lit limb sits.
+     Added: a warm sun flare near the globe's lit edge and a soft blue
+     ambient halo centered behind the globe, for a premium "orbital photo"
+     backdrop rather than a flat gradient. */
   .scene{
     position:relative;width:100vw;height:100vh;overflow:hidden;
     background:
+      radial-gradient(ellipse 46% 38% at 87% 11%, rgba(255,247,222,.85) 0%, rgba(255,247,222,0) 62%),
+      radial-gradient(circle at 78.4% 42%, rgba(214,234,255,.5) 0%, rgba(214,234,255,0) 64%),
       radial-gradient(ellipse 70% 60% at 82% 25%, rgba(255,255,255,.95) 0%, rgba(225,240,255,0) 55%),
-      radial-gradient(ellipse 80% 70% at 70% 50%, #f5faff 0%, #e9f2fc 55%, #dcebf9 100%);
+      radial-gradient(ellipse 80% 70% at 70% 50%, #f7fbff 0%, #ecf4fc 55%, #dfedfb 100%);
   }
 
   .nebula, .stars{display:none;}
@@ -44,7 +49,7 @@
      a bright "product shot" composition rather than a bleeding cinematic one. */
   .globe-wrap{
     position:absolute;z-index:2;
-    left:77.3%;top:42%;
+    left:78.4%;top:42%;
     width:96vw;height:96vw;
     transform:translate(-50%,-50%);
     cursor:grab;
@@ -57,7 +62,7 @@
   .globe-wrap canvas.ready{opacity:1;}
   .globe-glow{
     position:absolute;z-index:1;
-    left:77.3%;top:42%;
+    left:78.4%;top:42%;
     width:96vw;height:96vw;
     transform:translate(-50%,-50%) scale(1.12);
     border-radius:50%;
@@ -252,7 +257,7 @@
 
   @media (max-width:1080px){
     .panel{width:44vw;}
-    .globe-wrap, .globe-glow{width:92vw;height:92vw;left:77.3%;top:42%;}
+    .globe-wrap, .globe-glow{width:92vw;height:92vw;left:78.4%;top:42%;}
     .nav-right .pill-btn span{display:none;}
   }
 
@@ -404,7 +409,9 @@ const CONFIG = {
   // Camera pulled ~20% farther for a true low-orbit feel; globeRadius scaled
   // up (and FOV nudged to 37°) to fully preserve apparent on-screen size —
   // larger planet, farther camera, more curvature, not a smaller globe.
-  globeRadius: 3.33,
+  // Radius then trimmed ~12% (cameraZ/FOV untouched, so no fisheye) to give
+  // more breathing room around the full disc per the reference comparison.
+  globeRadius: 2.93,
   cameraZ: 16.56,
   cameraTiltDeg: 17,
   autoRotateSpeed: 0.000035,
