@@ -320,26 +320,116 @@
   }
 
   @media (max-width:880px){
-    .scene{display:flex;flex-direction:column;justify-content:flex-end;}
-    .panel{
-      position:relative;left:0;top:0;width:100%;max-width:100%;height:auto;
-      padding:0 22px 36px;justify-content:flex-start;z-index:7;
+    /* ── Scene becomes a vertical scrollable page ── */
+    .scene{
+      display:block;
+      height:auto;
+      min-height:100svh;
+      overflow-x:hidden;
+      overflow-y:visible;
     }
-    h1{font-size:28px;}
+
+    /* ── Globe flows at the top ── */
+    .globe-wrap{
+      position:relative;
+      left:auto;top:auto;right:auto;
+      transform:none;
+      width:92vw;height:92vw;
+      margin:72px auto 0;
+      display:block;
+      opacity:1;
+      cursor:grab;
+      z-index:2;
+    }
+    .globe-wrap.is-dragging{cursor:grabbing;}
+
+    /* Decorative bg layers hidden on mobile — not worth the paint cost */
+    .globe-glow,.sun-flare,.nebula,.stars,.vignette{display:none;}
+    #arcs{display:none;}
+
+    /* Restore the scrim as a solid fade below the globe */
+    .scrim{
+      position:relative;z-index:5;
+      background:linear-gradient(180deg,
+        rgba(238,244,251,0) 0%,
+        rgba(238,244,251,.7) 40%,
+        rgba(238,244,251,1) 70%);
+      height:60px;
+      margin-top:-60px;
+    }
+
+    /* ── Markers visible and interactive ── */
+    .marker-pill{display:flex;}
+    .marker-dot{display:block;}
+    .marker-connector{display:block;}
+    .hub-glow{display:block;}
+
+    /* Slightly smaller pills so they fit on mobile */
+    .marker-pill{
+      font-size:12px;padding:7px 12px 7px 8px;gap:7px;
+      backdrop-filter:blur(10px) saturate(140%);
+    }
+    .marker-pill.is-hub{font-size:14px;padding:9px 16px 9px 8px;}
+
+    /* ── Panel below the globe ── */
+    .panel{
+      position:relative;left:auto;top:auto;
+      width:100%;max-width:100%;height:auto;
+      padding:20px 22px 48px;
+      justify-content:flex-start;
+      z-index:7;
+    }
+    h1{font-size:26px;}
     .desc{font-size:14px;}
     .stats{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:18px;}
-    .scrim{background:linear-gradient(180deg, rgba(238,244,251,.3) 0%, rgba(238,244,251,.9) 45%, rgba(238,244,251,1) 70%);}
-    .marker-pill, .marker-dot, .marker-connector, .hub-glow, #arcs{display:none;}
-    .globe-glow{display:none;}
-    .globe-wrap{
-      position:absolute;right:50%;top:6%;
-      width:130vw;height:130vw;
-      left:50%;transform:translateX(-50%);
-      opacity:.7;cursor:default;
+
+    /* Hint sits above panel */
+    .hint{position:relative;bottom:auto;margin:12px 0 0;z-index:7;}
+
+    .nav{top:14px;left:14px;}
+    .nav .logo-svg{height:32px;}
+
+    /* ── Country popup overlay ── */
+    .marker-popup{
+      display:none;
+      position:fixed;
+      left:50%;bottom:30%;
+      transform:translateX(-50%);
+      z-index:30;
+      min-width:220px;
+      background:rgba(10,14,26,.88);
+      backdrop-filter:blur(18px) saturate(160%);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:18px;
+      padding:20px 22px 18px;
+      text-align:center;
+      color:#fff;
+      box-shadow:0 20px 60px rgba(0,0,0,.5);
     }
-    .nav{top:18px;left:18px;}
-    .nav-right{top:18px;right:18px;}
-    .nav-right .pill-btn span{display:none;}
+    .marker-popup.visible{display:block;}
+    .marker-popup .popup-flag{
+      width:32px;height:22px;border-radius:4px;overflow:hidden;
+      margin:0 auto 10px;box-shadow:0 0 0 1px rgba(255,255,255,.2);
+    }
+    .marker-popup .popup-flag svg{width:100%;height:100%;}
+    .marker-popup .popup-country{
+      font-size:18px;font-weight:700;margin-bottom:14px;
+      font-family:'Sora',sans-serif;letter-spacing:-.2px;
+    }
+    .marker-popup .popup-visit{
+      display:inline-flex;align-items:center;gap:8px;
+      background:linear-gradient(180deg,#3f6cf0,#1a42c4);
+      color:#fff;font-weight:700;font-size:14px;
+      padding:11px 22px;border-radius:999px;
+      text-decoration:none;
+      box-shadow:0 6px 20px rgba(30,60,200,.4);
+    }
+    .marker-popup .popup-close{
+      display:block;margin:12px auto 0;
+      background:none;border:none;color:rgba(255,255,255,.45);
+      font-size:13px;cursor:pointer;
+      font-family:'Inter',sans-serif;
+    }
   }
 
   @media (prefers-reduced-motion: reduce){
@@ -413,6 +503,17 @@
   </main>
 
   <div id="markers"></div>
+
+  <!-- Mobile country popup -->
+  <div class="marker-popup" id="markerPopup" aria-hidden="true">
+    <div class="popup-flag" id="popupFlag"></div>
+    <div class="popup-country" id="popupCountry"></div>
+    <a class="popup-visit" id="popupVisit" target="_blank" rel="noopener">
+      Visit Site
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+    <button class="popup-close" id="popupClose">Dismiss</button>
+  </div>
 
   <p class="hint">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="8" y="2" width="8" height="14" rx="4"/><line x1="12" y1="6" x2="12" y2="9"/></svg>
@@ -1003,6 +1104,21 @@ function animate(){
 
 window.addEventListener('resize', resizeRenderer);
 
+/* ============================ MOBILE POPUP ============================ */
+(function(){
+  const popup  = document.getElementById('markerPopup');
+  const close  = document.getElementById('popupClose');
+  const scene  = document.getElementById('scene');
+  function hidePopup(){ popup.classList.remove('visible'); popup.setAttribute('aria-hidden','true'); }
+  close.addEventListener('click', hidePopup);
+  // Tap anywhere outside the popup dismisses it
+  scene.addEventListener('click', (e)=>{ if(!popup.contains(e.target)) hidePopup(); });
+  // Swipe down also dismisses
+  let touchStartY = 0;
+  popup.addEventListener('touchstart', e=>{ touchStartY = e.touches[0].clientY; }, {passive:true});
+  popup.addEventListener('touchend',   e=>{ if(e.changedTouches[0].clientY - touchStartY > 40) hidePopup(); }, {passive:true});
+})();
+
 /* ============================ MARKERS + ARCS ============================ */
 const MARKER_URLS = {
   uae:   'https://capitalambulance.ae',
@@ -1054,7 +1170,19 @@ CONFIG.countries.forEach(c=>{
   pill.style.animationDelay = `${(Math.random()*1.5).toFixed(2)}s`;
   if (MARKER_URLS[c.id]) {
     pill.style.cursor = 'pointer';
-    pill.addEventListener('click', () => window.open(MARKER_URLS[c.id], '_blank', 'noopener'));
+    pill.addEventListener('click', (e) => {
+      if (window.innerWidth <= 880) {
+        e.stopPropagation();
+        document.getElementById('popupFlag').innerHTML = FLAG_SVGS[c.id];
+        document.getElementById('popupCountry').textContent = c.name;
+        document.getElementById('popupVisit').href = MARKER_URLS[c.id];
+        const popup = document.getElementById('markerPopup');
+        popup.classList.add('visible');
+        popup.setAttribute('aria-hidden','false');
+      } else {
+        window.open(MARKER_URLS[c.id], '_blank', 'noopener');
+      }
+    });
   }
   anchor.appendChild(pill);
   markersEl.appendChild(anchor);
