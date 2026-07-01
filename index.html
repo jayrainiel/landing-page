@@ -49,7 +49,7 @@
      a bright "product shot" composition rather than a bleeding cinematic one. */
   .globe-wrap{
     position:absolute;z-index:2;
-    left:65%;top:54%;
+    left:70%;top:54%;
     width:96vw;height:96vw;
     transform:translate(-50%,-50%);
     cursor:grab;
@@ -62,7 +62,7 @@
   .globe-wrap canvas.ready{opacity:1;}
   .globe-glow{
     position:absolute;z-index:1;
-    left:65%;top:54%;
+    left:70%;top:54%;
     width:96vw;height:96vw;
     transform:translate(-50%,-50%) scale(1.12);
     border-radius:50%;
@@ -75,27 +75,35 @@
 
   svg#arcs{position:absolute;z-index:3;pointer-events:none;overflow:visible;width:100%;height:100%;top:0;left:0;}
 
-  /* Sun-ray bloom — warm golden light from top-right of globe */
+  /* Sun-ray bloom — large warm golden burst from top-right of globe */
   .sun-flare{
     position:absolute;z-index:3;pointer-events:none;
-    left:82%;top:6%;
-    width:34vw;height:34vw;
+    left:88%;top:2%;
+    width:56vw;height:56vw;
     transform:translate(-50%,-50%);
     border-radius:50%;
     background:radial-gradient(circle at 50% 50%,
-      rgba(255,252,230,0.88)  0%,
-      rgba(255,240,160,0.60) 14%,
-      rgba(255,215,90,0.28)  30%,
-      rgba(255,190,60,0.08)  50%,
-      transparent            68%);
-    filter:blur(22px);
+      rgba(255,255,245,1.00)  0%,
+      rgba(255,248,210,0.90)  8%,
+      rgba(255,235,150,0.70) 18%,
+      rgba(255,215,90, 0.40) 32%,
+      rgba(255,195,60, 0.15) 50%,
+      rgba(255,180,40, 0.04) 65%,
+      transparent             80%);
+    filter:blur(32px);
     mix-blend-mode:screen;
   }
-  /* Tighter inner hot-spot */
+  /* Brilliant white hot-spot core */
+  .sun-flare::before{
+    content:'';position:absolute;inset:38%;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,255,255,1) 0%,rgba(255,252,220,0.6) 40%,transparent 75%);
+    filter:blur(6px);
+  }
+  /* Soft wide halo ring */
   .sun-flare::after{
-    content:'';position:absolute;inset:35%;border-radius:50%;
-    background:radial-gradient(circle,rgba(255,255,245,0.85) 0%,transparent 70%);
-    filter:blur(10px);
+    content:'';position:absolute;inset:-10%;border-radius:50%;
+    background:radial-gradient(circle,transparent 52%,rgba(255,230,130,0.12) 65%,transparent 80%);
+    filter:blur(18px);
   }
 
   /* Light fade behind the panel text instead of a dark scrim — just enough
