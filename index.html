@@ -49,7 +49,7 @@
      a bright "product shot" composition rather than a bleeding cinematic one. */
   .globe-wrap{
     position:absolute;z-index:2;
-    left:74.5%;top:56.8%;
+    left:65%;top:54%;
     width:96vw;height:96vw;
     transform:translate(-50%,-50%);
     cursor:grab;
@@ -62,7 +62,7 @@
   .globe-wrap canvas.ready{opacity:1;}
   .globe-glow{
     position:absolute;z-index:1;
-    left:74.5%;top:56.8%;
+    left:65%;top:54%;
     width:96vw;height:96vw;
     transform:translate(-50%,-50%) scale(1.12);
     border-radius:50%;
@@ -74,6 +74,32 @@
   }
 
   svg#arcs{position:absolute;z-index:3;pointer-events:none;overflow:visible;width:100%;height:100%;top:0;left:0;}
+
+  /* Sun-ray bloom — warm golden light from top-right of globe */
+  .sun-flare{
+    position:absolute;z-index:3;pointer-events:none;
+    /* Anchored to top-right of globe: globe center ~65% left, ~54% top;
+       flare sits ~18% right of center, ~28% above center */
+    left:78%;top:12%;
+    width:52vw;height:52vw;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+    background:radial-gradient(circle at 50% 50%,
+      rgba(255,252,230,0.95)  0%,
+      rgba(255,240,170,0.75) 10%,
+      rgba(255,220,100,0.45) 22%,
+      rgba(255,200,80,0.18)  38%,
+      rgba(255,180,60,0.06)  55%,
+      transparent            72%);
+    filter:blur(28px);
+    mix-blend-mode:screen;
+  }
+  /* Tighter inner hot-spot */
+  .sun-flare::after{
+    content:'';position:absolute;inset:30%;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,255,240,0.9) 0%,transparent 70%);
+    filter:blur(12px);
+  }
 
   /* Light fade behind the panel text instead of a dark scrim — just enough
      to keep the headline crisp where it might overlap the globe's edge. */
@@ -292,6 +318,7 @@
   <div class="nebula" aria-hidden="true"></div>
   <div class="stars" id="stars" aria-hidden="true"></div>
 
+  <div class="sun-flare" aria-hidden="true"></div>
   <div class="globe-glow" aria-hidden="true"></div>
   <div class="globe-wrap" id="globeWrap">
     <canvas id="globeCanvas"></canvas>
